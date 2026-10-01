@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>drop.</title>
+<meta name="theme-color" content="#080a0f">
+<style>
+:root{--bg:#080a0f;--card:#11141b;--card2:#171b24;--text:#f5f7fb;--muted:#9ba3b4;--line:#252b38;--a:#7c5cff;--ok:#4dd4a7;--bad:#ff7184}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#1b1238 0,#080a0f 38%);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.wrap{max-width:1050px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}.brand{font-size:22px;font-weight:850}.brand span{color:#a99aff}.card{background:linear-gradient(180deg,#12151d,#0f1218);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 14px 45px #0005}.auth{max-width:440px;margin:8vh auto}.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}@media(max-width:780px){.grid{grid-template-columns:1fr}.wrap{padding:12px}}h1{font-size:34px;line-height:1.1;margin:0 0 10px;letter-spacing:-1px}h2{font-size:20px;margin:0 0 10px}.muted{color:var(--muted)}.field{margin:12px 0}.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}.field input{width:100%;padding:12px;background:#0b0e14;color:var(--text);border:1px solid var(--line);border-radius:12px;outline:0}.field input:focus{border-color:var(--a)}.btn{border:0;border-radius:12px;padding:11px 16px;background:var(--a);color:white;font-weight:750}.secondary{background:#1a1f29;border:1px solid var(--line)}.danger{background:#3a151e;color:#ff9aa9}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pill{border:1px solid var(--line);background:#10131a;color:var(--muted);padding:7px 11px;border-radius:999px}.row{display:flex;gap:9px;align-items:center}.tabs{display:flex;gap:5px;background:#0b0e14;padding:5px;border-radius:12px;margin:16px 0}.tab{flex:1;border:0;padding:10px;background:transparent;color:var(--muted);border-radius:9px}.tab.active{background:#1a1f29;color:white}.list{display:grid;gap:10px;margin-top:14px}.item{padding:13px;background:var(--card2);border:1px solid var(--line);border-radius:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}.who{display:flex;align-items:center;gap:10px;min-width:0}.avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#29213f;color:#c9c0ff;font-weight:800}.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.notice{padding:11px 13px;border-radius:12px;background:#111a17;border:1px solid #214137;color:#91efd1;margin-top:12px}.error{background:#241218;border-color:#51202c;color:#ff9eaa}.code{font-size:32px;font-weight:900;letter-spacing:4px;margin:10px 0}.small{font-size:12px}
+</style>
+</head>
+<body><div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ================================
+   SUPABASE
+   ================================
+   Replace only these two values.
+*/
+const SUPABASE_URL="https://ubrlghujznhgejclglyn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_l81feG9DVoWlxZfxArzKlA_lcEUuf_e";
+
+const ready=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")&&SUPABASE_PUBLISHABLE_KEY.startsWith("sb_");
+const sb=ready?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
+const app=document.getElementById("app");
+let user=null,me=null;
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ini=s=>(String(s||"?").trim().slice(0,2)||"?").toUpperCase();
+
+function setup(){
+app.innerHTML=`<div class="wrap"><div class="card auth">
+<div class="brand">drop<span>.</span></div><h1 style="margin-top:18px">Fast. Clean. Connected.</h1>
+<p class="muted">Die App ist fertig. Es fehlt nur noch deine Supabase-Verbindung.</p>
+<div class="notice">In dieser Datei oben <b>SUPABASE_URL</b> und <b>SUPABASE_PUBLISHABLE_KEY</b> einsetzen.</div>
+<p class="small muted">Nur den Publishable Key verwenden. Niemals einen Secret/service_role Key in diese Datei eintragen.</p>
+</div></div>`;
+}
+
+function auth(mode="login",msg=""){
+app.innerHTML=`<div class="wrap"><div class="card auth">
+<div class="brand">drop<span>.</span></div><h1 style="margin-top:18px">${mode==="login"?"Willkommen zurück":"Account erstellen"}</h1>
+<p class="muted">${mode==="login"?"Einloggen und loslegen.":"Erstelle deinen Drop-Account."}</p>
+<div class="tabs"><button id="loginTab" class="tab ${mode==="login"?"active":""}">Login</button><button id="signupTab" class="tab ${mode==="signup"?"active":""}">Registrieren</button></div>
+<form id="form">${mode==="signup"?`<div class="field"><label>Benutzername</label><input id="username" minlength="3" maxlength="24" required placeholder="z. B. caspar"></div>`:""}
+<div class="field"><label>E-Mail</label><input id="email" type="email" required placeholder="du@example.com"></div>
+<div class="field"><label>Passwort</label><input id="password" type="password" minlength="6" required placeholder="Mindestens 6 Zeichen"></div>
+<button class="btn" style="width:100%">${mode==="login"?"Einloggen":"Account erstellen"}</button></form>
+${msg?`<div class="notice ${msg.error?"error":""}">${esc(msg.text)}</div>`:""}
+</div></div>`;
+loginTab.onclick=()=>auth("login");signupTab.onclick=()=>auth("signup");
+form.onsubmit=async e=>{
+e.preventDefault();let email=emailEl().value.trim(),password=document.getElementById("password").value,un=document.getElementById("username")?.value.trim().toLowerCase();
+const b=e.submitter;b.disabled=true;b.textContent="Bitte warten…";
+if(un){const r=await sb.auth.signUp({email,password,options:{data:{username:un}}});if(r.error)return auth("signup",{error:true,text:r.error.message});
+
+return auth("login",{text:"Account erstellt. Falls E-Mail-Bestätigung aktiv ist, bestätige zuerst deine E-Mail."})}
+const r=await sb.auth.signInWithPassword({email,password});if(r.error)return auth("login",{error:true,text:r.error.message});boot();
+};}
+function emailEl(){return document.getElementById("email")}
+
+async function boot(){
+const g=await sb.auth.getUser();user=g.data.user;
+if(!user)return auth();
+let p=await sb.from("profiles").select("*").eq("id",user.id).maybeSingle();
+if(p.error)return error(p.error.message);
+if(!p.data){let un=(user.user_metadata?.username||"user"+user.id.slice(0,6)).toLowerCase();let x=await sb.from("profiles").insert({id:user.id,username:un});if(x.error)return error(x.error.message);me={id:user.id,username:un}}else me=p.data;
+home();
+}
+
+async function home(){
+const r=await sb.from("drops").select("id,title,code,created_at,drop_members(user_id,profiles(username))").order("created_at",{ascending:false});
+if(r.error)return error(r.error.message);
+let mine=(r.data||[]).filter(d=>(d.drop_members||[]).some(m=>m.user_id===user.id));
+app.innerHTML=`<div class="wrap"><header class="top"><div class="brand">drop<span>.</span></div><div class="row"><span class="pill">@${esc(me.username)}</span><button id="logout" class="btn secondary">Logout</button></div></header>
+<div class="grid"><main><section class="card"><h1>Dein nächster Drop.</h1><p class="muted">Erstelle einen Drop, teile den Code und lass andere direkt beitreten.</p><div class="actions"><button id="create" class="btn">+ Drop erstellen</button><button id="join" class="btn secondary">Drop beitreten</button></div></section>
+<section class="card" style="margin-top:18px"><h2>Deine Drops</h2><div class="list">${mine.length?mine.map(dropHtml).join(""):`<div class="empty">Noch keine Drops. Erstelle deinen ersten.</div>`}</div></section></main>
+<aside class="card"><h2>So funktioniert's</h2><p class="muted">1. Drop erstellen</p><p class="muted">2. Code teilen</p><p class="muted">3. Freunde beitreten lassen</p><div class="notice">Mitglieder werden per Realtime aktualisiert.</div></aside></div></div>`;
+logout.onclick=async()=>{await sb.auth.signOut();auth()};create.onclick=createDrop;join.onclick=joinDrop;
+document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openDrop(b.dataset.id));
+}
+function dropHtml(d){return `<div class="item"><div class="who"><div class="avatar">${esc(ini(d.title))}</div><div><b>${esc(d.title)}</b><div class="small muted">${esc(d.code)} · ${(d.drop_members||[]).length} Mitglied(er)</div></div></div><button class="btn secondary" data-id="${d.id}">Öffnen</button></div>`}
+
+async function createDrop(){
+let title=prompt("Name des Drops:","Mein Drop");if(title===null)return;title=title.trim().slice(0,60)||"Mein Drop";
+let code=Math.random().toString(36).slice(2,8).toUpperCase();
+let r=await sb.from("drops").insert({title,code,owner_id:user.id}).select().single();if(r.error)return alert(r.error.message);
+let m=await sb.from("drop_members").insert({drop_id:r.data.id,user_id:user.id});if(m.error)return alert(m.error.message);openDrop(r.data.id);
+}
+async function joinDrop(){
+let code=prompt("Drop-Code:");if(!code)return;
+let r=await sb.from("drops").select("id").eq("code",code.trim().toUpperCase()).maybeSingle();if(r.error||!r.data)return alert("Diesen Drop gibt es nicht.");
+let m=await sb.from("drop_members").upsert({drop_id:r.data.id,user_id:user.id},{onConflict:"drop_id,user_id"});if(m.error)return alert(m.error.message);openDrop(r.data.id);
+}
+async function openDrop(id){
+let r=await sb.from("drops").select("*,drop_members(user_id,profiles(username))").eq("id",id).single();if(r.error)return alert(r.error.message);
+let d=r.data;
+app.innerHTML=`<div class="wrap"><header class="top"><div class="brand">drop<span>.</span></div><button id="back" class="btn secondary">← Zurück</button></header>
+<section class="card"><div class="small muted">DROP</div><h1>${esc(d.title)}</h1><div class="code">${esc(d.code)}</div><p class="muted">Teile diesen Code mit anderen.</p><div class="actions"><button id="copy" class="btn">Code kopieren</button><button id="leave" class="btn danger">Drop verlassen</button></div></section>
+<section class="card" style="margin-top:18px"><h2>Mitglieder</h2><div id="members" class="list">${members(d.drop_members)}</div></section></div>`;
+back.onclick=home;copy.onclick=()=>navigator.clipboard?.writeText(d.code);
+leave.onclick=async()=>{if(!confirm("Drop verlassen?"))return;let x=await sb.from("drop_members").delete().eq("drop_id",id).eq("user_id",user.id);if(x.error)alert(x.error.message);else home()};
+sb.channel("drop-"+id).on("postgres_changes",{event:"*",schema:"public",table:"drop_members",filter:"drop_id=eq."+id},async()=>{let x=await sb.from("drops").select("*,drop_members(user_id,profiles(username))").eq("id",id).single();if(x.data)document.getElementById("members").innerHTML=members(x.data.drop_members)}).subscribe();
+}
+function members(ms=[]){return ms.map(m=>`<div class="item"><div class="who"><div class="avatar">${esc(ini(m.profiles?.username))}</div><b>@${esc(m.profiles?.username||"unknown")}</b></div>${m.user_id===user.id?'<span class="pill">Du</span>':""}</div>`).join("")||`<div class="empty">Noch keine Mitglieder.</div>`}
+function error(m){app.innerHTML=`<div class="wrap"><div class="card auth"><h2>Fehler</h2><p class="muted">${esc(m)}</p><button class="btn" onclick="boot()">Erneut versuchen</button></div></div>`}
+
+if(!ready)setup();else{sb.auth.onAuthStateChange(()=>setTimeout(boot,0));boot();}
+</script></body></html>
